@@ -1,7 +1,7 @@
 # Calculator
 A lightweight calculator application for general mathmatics. 
 
-IMG, IMG
+![calculator](https://user-images.githubusercontent.com/87616660/137824028-23877a1a-5b45-4c15-b2c8-8a9e8adef8e2.png) ![calculator2](https://user-images.githubusercontent.com/87616660/137824034-e3a9e768-e820-4245-815b-e62f2dcd5794.png)
 
 ## Features
 
@@ -11,6 +11,7 @@ IMG, IMG
 - Division
 - Decimals
 - Button and hotkey support
+- Clear and Backspace
 
 ## Version Control
 Calculator and all related files are dependent on the following:
