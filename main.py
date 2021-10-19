@@ -3,8 +3,8 @@ import tkinter as tk
 
 
 #================================================================#
-# Calculator | Jarrod Burns | ta747839@gmail.com | 10/18/2021    #
-# Revision 1.0.0 - Update before commit                          #
+# Calculator | Jarrod Burns | ta747839@gmail.com | 10/19/2021    #
+# Revision 1.0.1 - Update before commit                          #
 #================================================================#
 
 
@@ -35,7 +35,7 @@ class Calc:
                 text=index + 1,
                 padx=29,
                 pady=12,
-                command=lambda x=index + 1: self.button_click(x),
+                command=lambda x=str(index + 1): self.button_click(x),
                 font=("Segoe", 12, "bold")
             )
             self.int_buttons[index].grid(
@@ -48,7 +48,7 @@ class Calc:
             text="0",
             padx=69,
             pady=12,
-            command=lambda x=0: self.button_click(x),
+            command=lambda x="0": self.button_click(x),
             font=("Segoe", 12, "bold")
         )
         self.zero_btn.grid(row=5, column=0, columnspan=2, sticky="s")
@@ -56,7 +56,8 @@ class Calc:
         self.text_box = tk.Text(
             self.frame,
             state="disabled",
-            height=1, width=13,
+            height=1,
+            width=13,
             font=("Segoe", 32)
         )
         self.text_box.grid(row=0, column=0, columnspan=4)
@@ -144,9 +145,10 @@ class Calc:
         # rjust hack; pass "tag-right" to insert statements.
         self.text_box.tag_configure('tag-right', justify='right')
 
-        # ---------------------------- Hot Keys ---------------------------- #
+        # Hot key binding assignments.
         for num in range(0, 10):
-            self.frame.bind_all(str(num) or "KP_" + str(num),
+            num = str(num)
+            self.frame.bind_all(num or "KP_" + num,
                                 lambda event, x=num: self.button_click(x))
 
         for k, v in self.sign_hotkeys.items():
@@ -158,7 +160,12 @@ class Calc:
         self.frame.bind_all("." or "KP_Decimal", lambda event: self.decimal())
         self.frame.bind_all("c", lambda event: self.clear())
 
-    def state_config(func):
+        # Sets the ledger display to zero on application startup.
+        self.text_box.configure(state="normal")
+        self.insert_ledger("0")
+        self.text_box.configure(state="disabled")
+
+    def state_config(func, *args, **kwargs):
         """
         This decorator unlocks the textbox for data insertion during a
         method call and then locks the textbox after method resolution.
@@ -168,6 +175,7 @@ class Calc:
             self.text_box.configure(state="normal")
             func(self, *args, **kwargs)
             self.text_box.configure(state="disabled")
+
         return wrapper
 
     def insert_commas(self, value):
@@ -177,8 +185,8 @@ class Calc:
 
         # :, will chop off trailing zeros after the decimal place,
         # the split call lets us represent a number like 5,000.00001
-        if "." in str(value):
-            t = str(value).split(".")
+        if "." in value:
+            t = value.split(".")
             return f"{int(t[0]):,}." + t[1]
         else:
             return f"{int(value):,}"
@@ -197,13 +205,13 @@ class Calc:
     @ state_config
     def button_click(self, btn_value):
 
-        if len(self.x_value) < 11:      # Block digits above max display size
+        if len(self.x_value) < 11:
             self.clear_ledger()
-            self.x_value += str(btn_value)
+            self.x_value += btn_value
             self.insert_ledger(self.insert_commas(self.x_value))
 
-        # Block multi-zero inputs
-        if len(self.x_value) == 1 and not btn_value and "." not in self.x_value:
+        # Block multi-zero inputs before decimal place
+        if len(self.x_value) == 1 and not int(btn_value) and "." not in self.x_value:
             self.x_value = ""
 
     @ state_config
@@ -211,7 +219,9 @@ class Calc:
         if len(self.x_value) > 1:
             self.x_value = self.x_value[:-1]
         else:
-            self.x_value = "0"   # Resets display if last number is backspaced
+            # Resets display if last number is backspaced
+            self.x_value = "0"
+
         self.clear_ledger()
         self.insert_ledger(self.insert_commas(self.x_value))
 
@@ -219,6 +229,7 @@ class Calc:
     def clear(self):
         self.reset_values()
         self.clear_ledger()
+        self.insert_ledger("0")
 
     @ state_config
     def sign_operation(self, sign):
@@ -226,7 +237,7 @@ class Calc:
         Handles multiplication, division, subtraction,
         and addition operations.
         """
-        if len(self.x_value) > 0:  # add sign only if there is something to evaluate
+        if len(self.x_value) > 0:
             self.sign = sign
             self.y_value = self.x_value
             self.x_value = ""
@@ -238,26 +249,26 @@ class Calc:
             self.x_value = "0."
             self.insert_ledger(self.x_value)
 
-        if "." not in self.x_value:         # Blocks multi-decimal inputs
+        if "." not in self.x_value:
             self.clear_ledger()
             self.x_value += "."
             self.insert_ledger(self.insert_commas(self.x_value))
 
     @ state_config
     def equals(self):
-        if self.y_value:                    # Don't evaulate an empty ledger.
-            solution = eval(self.y_value + self.sign + self.x_value)
+        if self.x_value:
+            solution = str(eval(self.y_value + self.sign + self.x_value))
             self.clear_ledger()
             self.insert_ledger(self.insert_commas(solution))
             self.reset_values()
 
             # Replace display if solution is above max display size.
-            if len(str(solution)) > 11 and "." not in str(solution):
+            if len(solution) > 11 and "." not in solution:
                 self.clear_ledger()
                 self.insert_ledger("sum > 10^11")
 
             # Display approximation of decimals if above max display size
-            if len(str(solution)) > 10 and "." in str(solution):
+            if len(solution) > 10 and "." in solution:
                 self.clear_ledger()
                 self.insert_ledger("≈" + self.insert_commas(solution))  # Alt 247
 
